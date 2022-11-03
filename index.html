@@ -52,12 +52,19 @@
                 return Sk.builtinFiles['files'][x]
             }
 
+            function stopit() {
+                StopExecution = true;
+              }
+
             function runit() {
+                StopExecution = false;
                 var prog = aceEditor.getValue()
                 var mypre = document.getElementById('output')
                 mypre.innerHTML = ''
                 Sk.pre = 'output'
                 Sk.configure({
+                    killableWhile: true,
+                    killableFor: true,
                     inputfun: function () {
                         // the function returns a promise to give a result back later...
                         outputConsole = document.getElementById('output')
@@ -84,8 +91,13 @@
                     read: builtinRead
                 });
                 (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'canvas'
-                var myPromise = Sk.misceval.asyncToPromise(function () {
-                    return Sk.importMainWithBody('<stdin>', false, prog, true)
+                var myPromise = Sk.misceval.asyncToPromise(() =>
+                Sk.importMainWithBody("<stdin>", false, prog, true), {
+                  // handle a suspension of the executing code
+                  // "*" says handle all types of suspensions
+                  "*": () => {
+                    if (StopExecution) throw "Execution interrupted"
+                  }
                 })
                 myPromise.then(
                     function (mod) {
@@ -113,6 +125,7 @@ print("This is the sum:", a+b)
         <br />
         <div id="container">
             <button type="button" onclick="runit()">Run</button>
+            <button type="button" onclick="stopit()">Stop</button>
         </div>
 
         <div id="output-console">
