@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script
+            src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
+            type="text/javascript"
+        ></script>
+        <script
+            src="http://skulpt.org/js/skulpt.min.js"
+            type="text/javascript"
+        ></script>
+        <script
+            src="http://skulpt.org/js/skulpt-stdlib.js"
+            type="text/javascript"
+        ></script>
+        <script>
+            Sk.configure({
+                __future__: Sk.python3
+            })
+            for (var key in Sk.python2) {
+                Sk.python2[key] = true
+            }
+        </script>
+        <link rel="stylesheet" href="style.css" />
+        <title>Code in python</title>
+    </head>
+
+    <body>
+        <script type="text/javascript">
+            // output functions are configurable.  This one just appends some text
+            // to a pre element.
+            function outf(text, error = false) {
+                var mypre = document.getElementById('output')
+                if (error) {
+                    mypre.innerHTML +=
+                        '<span class="error">' +
+                        text +
+                        '</span>'
+                } else {
+                    mypre.innerHTML += 
+                        '<span>' +
+                        text +
+                        '</span>'
+                }
+            }
+            function builtinRead(x) {
+                if (
+                    Sk.builtinFiles === undefined ||
+                    Sk.builtinFiles['files'][x] === undefined
+                )
+                    throw "File not found: '" + x + "'"
+                return Sk.builtinFiles['files'][x]
+            }
+
+            function runit() {
+                var prog = aceEditor.getValue()
+                var mypre = document.getElementById('output')
+                mypre.innerHTML = ''
+                Sk.pre = 'output'
+                Sk.configure({
+                    inputfun: function () {
+                        // the function returns a promise to give a result back later...
+                        outputConsole = document.getElementById('output')
+                        // outputConsole.style.display="flex"
+                        outputConsole.innerHTML += `<textarea id="input" rows="1" placeholder="Input Here ..." oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'></textarea>`
+                        document.getElementById("input").focus();
+                        return new Promise(function (resolve, reject) {
+                            $('#input').on('keyup', function (e) {
+                                if (e.keyCode == 13) {
+                                    // remove keyup handler from #output
+                                    $('#input').off('keyup')
+                                    // resolve the promise with the value of the input field
+                                    inputText = $('#input').val()
+                                    document.getElementById("input").remove();
+                                    // outputConsole.style.display="block"
+                                    outf(inputText)
+                                    console.log(inputText)
+                                    resolve(inputText.slice(0, -1))
+                                }
+                            })
+                        })
+                    },
+                    output: outf,
+                    read: builtinRead
+                });
+                (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'canvas'
+                var myPromise = Sk.misceval.asyncToPromise(function () {
+                    return Sk.importMainWithBody('<stdin>', false, prog, true)
+                })
+                myPromise.then(
+                    function (mod) {
+                        console.log('success')
+                    },
+                    function (err) {
+                        outf(err.toString(), (error = true))
+                    }
+                )
+            }
+        </script>
+
+        <section class="input">
+            <div class="editor-container">
+                <div id="editor"># Happy Coding ... 
+
+# i = input("Enter input: ")
+print("This is the print statement!")
+a=10
+b=20
+print("This is the sum:", a+b)
+# print("This is the input:", i)</div>
+            </div>
+        </section>
+        <br />
+        <div id="container">
+            <button type="button" onclick="runit()">Run</button>
+        </div>
+
+        <div id="output-console">
+            <pre id="output"></pre>
+            <!-- If you want turtle graphics include a canvas -->
+            <div id="canvas">
+
+                <div id="canvas"></div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.5.3/ace.js"></script>
+        <script src="./codeEditor.js"></script>
+    </body>
+</html>
