@@ -5,7 +5,7 @@ let aceEditor = ace.edit(editor, {
 })
 
 aceEditor.setOptions({
-    autoScrollEditorIntoView: true,
-    copyWithEmptySelection: true,
+    enableBasicAutocompletion: true,
+    enableSnippets: true,
+    enableLiveAutocompletion: true
 });
-
